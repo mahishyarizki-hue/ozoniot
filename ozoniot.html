@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ozon IoT Smart System - Pro Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #800000; /* Merah Marun Profesional */
+            --secondary: #2b3674;
+            --bg: #f0f2f5;
+            --white: #ffffff;
+            --safe: #22c55e;
+            --warning: #facc15;
+            --danger: #ef4444;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            display: flex;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background: var(--primary);
+            color: white;
+            position: fixed;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .sidebar h2 { font-size: 22px; text-align: center; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px; }
+
+        .nav-item {
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-item i { margin-right: 15px; width: 20px; }
+        .nav-item:hover { background: rgba(255,255,255,0.1); }
+
+        /* --- MAIN CONTENT --- */
+        .main { margin-left: 290px; padding: 30px; width: calc(100% - 290px); }
+
+        .header { margin-bottom: 30px; }
+        .header h1 { color: var(--secondary); margin: 0; font-size: 28px; }
+
+        /* --- CARDS GRID --- */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+
+        .card {
+            background: var(--white);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        .card:hover { transform: translateY(-5px); }
+        .card.clickable { cursor: pointer; border: 2px solid transparent; }
+        .card.clickable:hover { border-color: var(--primary); }
+
+        .card h3 { color: #8892b0; font-size: 13px; text-transform: uppercase; margin: 0 0 10px 0; }
+        
+        .value-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card .value { font-size: 32px; font-weight: bold; color: var(--secondary); }
+
+        /* Kotak Indikator Warna */
+        .status-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            background: #ccc;
+            box-shadow: 0 0 8px rgba(0,0,0,0.1);
+        }
+
+        /* --- CONTROL BUTTON --- */
+        .btn-control {
+            margin-top: 30px;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 10px;
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(128, 0, 0, 0.2);
+            font-size: 16px;
+        }
+
+        .btn-control:hover { background: #600000; }
+
+        /* --- HISTORY TABLE --- */
+        .history-box { background: white; margin-top: 40px; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { text-align: left; padding: 12px; color: #8892b0; border-bottom: 2px solid var(--bg); }
+        td { padding: 12px; border-bottom: 1px solid var(--bg); color: var(--secondary); font-size: 14px; }
+
+        /* --- MODAL STANDAR WHO --- */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            align-items: center; justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white; padding: 30px; border-radius: 15px; max-width: 500px; width: 90%;
+            position: relative;
+        }
+
+        .close-modal { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>SterilOzone Pro</h2>
+    <div class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</div>
+    <div class="nav-item"><i class="fas fa-history"></i> Riwayat Alat</div>
+    <div class="nav-item"><i class="fas fa-info-circle"></i> Standar WHO</div>
+    <div class="nav-item"><i class="fas fa-user"></i> Profil Admin</div>
+</div>
+
+<div class="main">
+    <div class="header">
+        <h1>Dashboard Monitoring</h1>
+        <p>Sistem Sterilisasi Ozon Berbasis IoT</p>
+    </div>
+
+    <div class="grid">
+        <div class="card clickable" onclick="openWhoModal()">
+            <h3><i class="fas fa-wind"></i> Kadar Ozon (Tap for Info)</h3>
+            <div class="value-container">
+                <div id="ozone" class="value">-</div>
+                <div id="ozone-indicator" class="status-indicator"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><i class="fas fa-thermometer-half"></i> Suhu Generator</h3>
+            <div id="temp" class="value">-</div>
+        </div>
+
+        <div class="card">
+            <h3><i class="fas fa-toggle-on"></i> Status Ozon</h3>
+            <div id="ozonestatus" class="value">-</div>
+        </div>
+
+        <div class="card">
+            <h3><i class="fas fa-users"></i> Deteksi Manusia</h3>
+            <div id="human" class="value">-</div>
+        </div>
+
+        <div class="card">
+            <h3><i class="fas fa-fan"></i> Exhaust Fan</h3>
+            <div id="fan" class="value">-</div>
+        </div>
+    </div>
+
+    <button class="btn-control" onclick="toggleOzon()">KONTROL SISTEM ON / OFF</button>
+
+    <div class="history-box">
+        <h3><i class="fas fa-clock-rotate-left"></i> Riwayat Penggunaan Terkini</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Tanggal & Waktu</th>
+                    <th>Aksi</th>
+                    <th>Status Akhir</th>
+                    <th>Durasi Sesi</th>
+                </tr>
+            </thead>
+            <tbody id="history-body"></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="whoModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeWhoModal()">&times;</span>
+        <h2 style="color: var(--primary)">Standar Ozon WHO</h2>
+        <hr>
+        <p>Berdasarkan tingkat kadar gas ozon (O₃) di udara:</p>
+        <ul style="list-style: none; padding: 0;">
+            <li style="margin-bottom: 10px;">🟢 <b style="color: var(--safe)">Aman (< 0.05 ppm):</b> Udara bersih dan sehat.</li>
+            <li style="margin-bottom: 10px;">🟡 <b style="color: var(--warning)">Waspada (0.05 - 0.1 ppm):</b> Ambang batas paparan singkat.</li>
+            <li style="margin-bottom: 10px;">🔴 <b style="color: var(--danger)">Bahaya (> 0.1 ppm):</b> Berisiko iritasi. Ruangan wajib dikosongkan!</li>
+        </ul>
+        <div style="background: #fff4f4; padding: 10px; border-radius: 8px; border-left: 5px solid var(--primary); margin-top: 15px;">
+            <b>Rekomendasi:</b> Nyalakan Exhaust Fan setelah sterilisasi hingga indikator berwarna hijau.
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+    import { getDatabase, ref, onValue, set, push } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+
+    // Konfigurasi Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyCYtAvn7QlxQrbiDBGs4KSaonEu0ebYBu0",
+        authDomain: "ozon-iot.firebaseapp.com",
+        databaseURL: "https://ozon-iot-default-rtdb.firebaseio.com/",
+        projectId: "ozon-iot",
+        storageBucket: "ozon-iot.firebasestorage.app",
+        messagingSenderId: "846115978202",
+        appId: "1:846115978202:web:fa80f1067e84dbd5f7dee3"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // 1. DATA OZON & INDIKATOR WARNA
+    onValue(ref(db, "ozone"), snap => {
+        const val = parseFloat(snap.val()) || 0;
+        const el = document.getElementById("ozone");
+        const indicator = document.getElementById("ozone-indicator");
+        
+        el.innerText = val + " ppm";
+
+        if (val < 0.05) {
+            indicator.style.backgroundColor = "var(--safe)";
+        } else if (val <= 0.1) {
+            indicator.style.backgroundColor = "var(--warning)";
+        } else {
+            indicator.style.backgroundColor = "var(--danger)";
+        }
+    });
+
+    // 2. DATA SUHU
+    onValue(ref(db, "temperature"), snap => document.getElementById("temp").innerText = snap.val() + " °C");
+    
+    // 3. STATUS OZON
+    onValue(ref(db, "ozone_status"), snap => {
+        const el = document.getElementById("ozonestatus");
+        const val = snap.val();
+        el.innerText = val;
+        el.style.color = (val === "ON") ? "var(--safe)" : "var(--danger)";
+    });
+
+    // 4. DETEKSI MANUSIA
+    onValue(ref(db, "human_detected"), snap => {
+        const h = document.getElementById("human");
+        const detected = snap.val();
+        h.innerText = detected ? "TERDETEKSI ⚠️" : "AMAN ✅";
+        h.style.color = detected ? "var(--danger)" : "var(--safe)";
+    });
+
+    // 5. STATUS EXHAUST FAN
+    onValue(ref(db, "fan_status"), snap => {
+        const f = document.getElementById("fan");
+        const val = snap.val();
+        f.innerText = val || "OFF";
+        f.style.color = (val === "ON") ? "var(--safe)" : "var(--danger)";
+    });
+
+    // 6. TAMPILKAN RIWAYAT (Ambil 5 terbaru)
+    onValue(ref(db, "history"), (snap) => {
+        const body = document.getElementById("history-body");
+        body.innerHTML = "";
+        const data = snap.val();
+        if (data) {
+            Object.keys(data).reverse().slice(0, 5).forEach(key => {
+                const item = data[key];
+                body.innerHTML += `<tr>
+                    <td>${item.timestamp}</td>
+                    <td>${item.action}</td>
+                    <td><b>${item.status}</b></td>
+                    <td>${item.duration || "-"}</td>
+                </tr>`;
+            });
+        }
+    });
+
+    // 7. FUNGSI TOMBOL ON/OFF & DURASI
+    window.toggleOzon = function() {
+        const statusRef = ref(db, "ozone_status");
+        onValue(statusRef, (snap) => {
+            const current = snap.val();
+            const next = current === "ON" ? "OFF" : "ON";
+            const now = new Date();
+
+            let durationStr = "-";
+
+            if (next === "OFF") {
+                const start = localStorage.getItem("start_time");
+                if (start) {
+                    const diff = Math.floor((now.getTime() - start) / 1000);
+                    const mins = Math.floor(diff / 60);
+                    const secs = diff % 60;
+                    durationStr = `${mins}m ${secs}s`;
+                    localStorage.removeItem("start_time"); // Reset setelah dimatikan
+                }
+            } else {
+                localStorage.setItem("start_time", now.getTime());
+            }
+
+            // Update status ke Firebase
+            set(statusRef, next);
+
+            // Simpan riwayat penggunaan ke Firebase
+            push(ref(db, "history"), {
+                timestamp: now.toLocaleString('id-ID'),
+                action: "Kontrol Manual",
+                status: next,
+                duration: next === "OFF" ? durationStr : "Berjalan..."
+            });
+        }, { onlyOnce: true });
+    };
+
+    // 8. FUNGSI MODAL WHO
+    window.openWhoModal = () => document.getElementById("whoModal").style.display = "flex";
+    window.closeWhoModal = () => document.getElementById("whoModal").style.display = "none";
+</script>
+
+</body>
+</html>
